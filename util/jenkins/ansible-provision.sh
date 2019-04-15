@@ -42,7 +42,6 @@ run_ansible() {
   ansible-playbook $verbose_arg $@
   ret=$?
   if [[ $ret -ne 0 ]]; then
-    echo "Exiting RET"
     exit $ret
   fi
 }
@@ -84,9 +83,10 @@ fi
 if [[ ( -z $AWS_ACCESS_KEY_ID || -z $AWS_SECRET_ACCESS_KEY ) && (! -f $BOTO_CONFIG) ]]; then
   echo "AWS credentials not found for $aws_account"
   exit 1
-#fi
+fi
 
 extra_vars_file="/var/tmp/extra-vars-$$.yml"
+sandbox_secure_vars_file="${WORKSPACE}/configuration-secure/ansible/vars/developer-sandbox.yml"
 sandbox_internal_vars_file="${WORKSPACE}/configuration-internal/ansible/vars/developer-sandbox.yml"
 extra_var_arg="-e@${extra_vars_file}"
 # Todo: uncomment this below when sandbox build failed with message: '_local_git_identity' undefined
@@ -187,6 +187,7 @@ fi
 
 # Lowercase the dns name to deal with an ansible bug
 dns_name="${dns_name,,}"
+
 deploy_host="${dns_name}.${dns_zone}"
 ssh-keygen -f "/var/lib/jenkins/.ssh/known_hosts" -R "$deploy_host"
 
@@ -458,7 +459,6 @@ cat $sandbox_secure_vars_file $sandbox_internal_vars_file $extra_vars_file | gre
 ansible -c ssh -i "${deploy_host}," $deploy_host -m copy -a "src=${extra_vars_file}_clean dest=/edx/app/edx_ansible/server-vars.yml" -u ubuntu -b
 ret=$?
 if [[ $ret -ne 0 ]]; then
-  echo "Exiting RET 2"
   exit $ret
 fi
 
